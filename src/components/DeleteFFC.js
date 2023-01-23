@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { FormControl, MenuItem, Select } from "@mui/material";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useAccount } from "wagmi";
+import * as PushAPI from "@pushprotocol/restapi";
 import { ethers } from "ethers";
 import { Framework } from "@superfluid-finance/sdk-core";
 import MoneyRouterABI from "../artifacts/MoneyRouter.json";
@@ -17,6 +18,37 @@ function DeleteFFC() {
 
   const [loadingAnim, setLoadingAnim] = useState(false);
   const [btnContent, setBtnContent] = useState("Delete Flow");
+
+  const PK = `${process.env.REACT_APP_PUSH_CHANNEL_PKEY}`;
+  const Pkey = `0x${PK}`;
+  const signer = new ethers.Wallet(Pkey);
+  // apiResponse?.status === 204, if sent successfully!
+  const sendMessage = async () => {
+    const receiver = document.getElementById("receiver").value;
+    console.log(receiver);
+
+    const apiResponse = await PushAPI.payloads.sendNotification({
+      signer,
+      type: 3, // target
+      identityType: 2, // direct payload
+      notification: {
+        title: "Stream Stopped",
+        body: "Stream stopped from contract to your account",
+      },
+      payload: {
+        title: "Stream Stopped",
+        body: `Stream has been stopped from contract into your address`,
+        cta: "",
+        img: "",
+      },
+      recipients: `eip155:5:${receiver}`, // recipient address
+      channel: "eip155:5:0x158a6720c0709F8B55dc9753B92DF1d555A9F577", // your channel address
+      env: "staging",
+    });
+    if (apiResponse?.status === 204) {
+      console.log("Message sent successfully");
+    }
+  };
 
   const deleteFlowFromContract = async () => {
     setLoadingAnim(true);
@@ -45,13 +77,15 @@ function DeleteFFC() {
           .connect(signer)
           .deleteFlowFromContract(daix.address, receiver)
           .then(async function (tx) {
+            await tx.wait();
+            sendMessage();
             console.log(`
             Congrats! You just successfully deleted a flow from the money router contract. 
             Tx Hash: ${tx.hash}
         `);
-            setBtnContent("Flow Updated");
+            setBtnContent("Flow Deleted");
             setTimeout(() => {
-              setBtnContent("Update Flow");
+              setBtnContent("Delete Flow");
             }, 2000);
             setLoadingAnim(false);
           });

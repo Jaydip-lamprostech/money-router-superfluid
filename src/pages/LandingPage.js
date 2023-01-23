@@ -11,13 +11,107 @@ import Dashboard from "../components/Dashboard";
 import SendLumpSum from "../components/SendLumpSum";
 import FlowIntoContract from "../components/FlowIntoContract";
 import FlowFromContract from "../components/FlowFromContract";
+import { Box, Button, Modal, Skeleton, Typography } from "@mui/material";
+import * as PushAPI from "@pushprotocol/restapi";
+import { useAccount, useSigner } from "wagmi";
 
 function LandingPage() {
-  const [index, setIndex] = useState();
+  // const [index, setIndex] = useState();
   const [showDashboard, setDashboard] = useState(true);
   const [showLumpSum, setLumpSum] = useState(false);
   const [showFlowIntoContract, setFlowIntoContract] = useState(false);
   const [showFlowFromContract, setFlowFromContract] = useState(false);
+  const { data: signer } = useSigner();
+  const [showOpted, setOpted] = useState(false);
+  const { address } = useAccount();
+
+  const [showPushNotifications, setPushNotifications] = useState();
+  // notification model
+  const [open, setOpen] = useState(false);
+  const handleOpen = () => {
+    setOpen(true);
+    notifi();
+  };
+  const handleClose = () => setOpen(false);
+
+  // const ethers = require("ethers");
+  // const PK = "bbc51259d318490f8adf068a81fa146344b1de5301413c11279f91ea31853859";
+  // const Pkey = `0x${PK}`;
+  // const signer = new ethers.Wallet(Pkey);
+
+  const notifi = async () => {
+    const subscriptions = await PushAPI.user.getSubscriptions({
+      user: `eip155:5:${address}`, // user address in CAIP
+      env: "staging",
+    });
+    if (subscriptions.length === 0) {
+      setOpted(false);
+    }
+    for (let i = 0; i < subscriptions.length; i++) {
+      if (
+        subscriptions[i].channel ===
+        "0x158a6720c0709F8B55dc9753B92DF1d555A9F577"
+      ) {
+        console.log("subscribed");
+        setOpted(true);
+      }
+    }
+    console.log(subscriptions);
+
+    const notifications = await PushAPI.user.getFeeds({
+      user: `eip155:5:${address}`, // user address in CAIP
+      env: "staging",
+    });
+    console.log(notifications);
+    setPushNotifications(notifications);
+  };
+
+  const optIn = async () => {
+    await PushAPI.channels.subscribe({
+      signer: signer,
+      channelAddress: "eip155:5:0x158a6720c0709F8B55dc9753B92DF1d555A9F577", // channel address in CAIP
+      userAddress: `eip155:5:${address}`, // user address in CAIP
+      onSuccess: () => {
+        console.log("opt in success");
+      },
+      onError: () => {
+        console.error("opt in error");
+      },
+      env: "staging",
+    });
+  };
+
+  const optOut = async () => {
+    await PushAPI.channels.unsubscribe({
+      signer: signer,
+      channelAddress: "eip155:5:0x158a6720c0709F8B55dc9753B92DF1d555A9F577", // channel address in CAIP
+      userAddress: "eip155:5:0xeB88DDaEdA2261298F1b740137B2ae35aA42A975", // user address in CAIP
+      onSuccess: () => {
+        console.log("opt out success");
+      },
+      onError: () => {
+        console.error("opt out error");
+      },
+      env: "staging",
+    });
+  };
+
+  const style = {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    width: "50vw",
+    bgcolor: "background.paper",
+    borderRadius: "20px",
+    boxShadow: 24,
+    p: 0,
+    paddingBottom: "32px",
+    maxHeight: "70vh",
+    overflow: "auto",
+    overflowX: "hidden",
+    maxWidth: "700px",
+  };
 
   return (
     <div className="main">
@@ -131,6 +225,18 @@ function LandingPage() {
       <div className="main-right">
         <div className="right-header-parent">
           <header className="right-header">
+            <Button onClick={handleOpen}>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                height="24px"
+                viewBox="0 0 24 24"
+                width="24px"
+                fill="#10bb35"
+              >
+                <path d="M0 0h24v24H0V0z" fill="none" />
+                <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-1.29 1.29c-.63.63-.19 1.71.7 1.71h13.17c.89 0 1.34-1.08.71-1.71L18 16z" />
+              </svg>
+            </Button>
             <ConnectButton
               accountStatus={{
                 smallScreen: "avatar",
@@ -155,6 +261,79 @@ function LandingPage() {
           ) : null}
         </div>
       </div>
+      <Modal
+        open={open}
+        onClose={handleClose}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
+      >
+        <Box sx={style}>
+          <Typography
+            id="modal-modal-title"
+            variant="h6"
+            component="h2"
+            style={{
+              position: "sticky",
+              top: "0",
+              backgroundColor: "#f3f4f6",
+              padding: "20px 20px",
+              margin: "0px",
+              fontWeight: 600,
+            }}
+          >
+            Notifications
+            {showOpted === true ? (
+              <button onClick={() => optOut()} className="push-btns">
+                Opt Out
+              </button>
+            ) : showOpted === false ? (
+              <button onClick={() => optIn()} className="push-btns">
+                Opt IN
+              </button>
+            ) : (
+              <Skeleton
+                animation="wave"
+                variant="rounded"
+                sx={{ bgcolor: "grey.100" }}
+              />
+            )}
+          </Typography>{" "}
+          <Typography id="modal-modal-description" sx={{ mt: 2, p: 2 }}>
+            {showPushNotifications &&
+              showOpted === true &&
+              showPushNotifications.map((item, key) => {
+                return (
+                  <div
+                    style={{
+                      border: "1px solid #10bb35aa",
+                      margin: "10px 0px",
+                      padding: "10px",
+                      borderRadius: "10px",
+                    }}
+                  >
+                    <h4 key={key}>{item.title} </h4>
+                    <p>{item.message}</p>
+                  </div>
+                );
+              })}
+            {!showOpted ? (
+              <div
+                style={{
+                  border: "1px solid #10bb35aa",
+                  margin: "10px 0px",
+                  padding: "10px",
+                  borderRadius: "10px",
+                }}
+              >
+                <h4>Opt In Money-Router channel to get notification </h4>
+                <p>
+                  Channel address - 0x158a6720c0709F8B55dc9753B92DF1d555A9F577{" "}
+                </p>
+              </div>
+            ) : null}
+          </Typography>
+        </Box>
+      </Modal>
     </div>
   );
 }

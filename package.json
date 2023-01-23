@@ -7,6 +7,7 @@
     "@emotion/styled": "^11.10.5",
     "@mui/icons-material": "^5.11.0",
     "@mui/material": "^5.11.4",
+    "@pushprotocol/restapi": "^0.3.0",
     "@rainbow-me/rainbowkit": "^0.8.1",
     "@superfluid-finance/ethereum-contracts": "^1.5.0",
     "@superfluid-finance/sdk-core": "^0.6.1",

@@ -40,13 +40,13 @@ function Dashboard() {
       provider: provider,
     });
     const daix = await sf.loadSuperToken("fDAIx");
-    console.log("fDAIx balance...");
+    // console.log("fDAIx balance...");
     try {
       const daixBalance = await daix.balanceOf({
         account: address,
         providerOrSigner: signer,
       });
-      console.log(daixBalance);
+      // console.log(daixBalance);
       setTokenBalance(parseFloat(daixBalance / Math.pow(10, 18)).toFixed(5));
     } catch (error) {
       console.log(error);
@@ -238,26 +238,33 @@ function Dashboard() {
             <div className="grid-sub">
               <span className="grid-sub-title">Send a lump sum</span>
               <span className="grid-sub-info">
-              Send and withdraw lump sums of tokens into and from the contract.
+                Send and withdraw lump sums of tokens into and from the
+                contract.
               </span>
             </div>
           )}
           <div className="grid-sub">
-            <span className="grid-sub-title">Send a stream into the contract</span>
+            <span className="grid-sub-title">
+              Send a stream into the contract
+            </span>
             <span className="grid-sub-info">
-            Choose a token, enter a flow rate, and stream it into the contract.
+              Choose a token, enter a flow rate, and stream it into the
+              contract.
             </span>
           </div>
           <div className="grid-sub">
-            <span className="grid-sub-title">Send a stream from the contract</span>
+            <span className="grid-sub-title">
+              Send a stream from the contract
+            </span>
             <span className="grid-sub-info">
-            Choose a token, enter a flow rate and recipient, and stream it from the contract.
+              Choose a token, enter a flow rate and recipient, and stream it
+              from the contract.
             </span>
           </div>
           <div className="grid-sub">
             <span className="grid-sub-title">Update and Delete streams</span>
             <span className="grid-sub-info">
-            Update and delete streams into and from the contract.
+              Update and delete streams into and from the contract.
             </span>
           </div>
         </div>

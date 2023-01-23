@@ -1,25 +1,70 @@
 import React, { useEffect, useState } from "react";
 import { FormControl, MenuItem, Select } from "@mui/material";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useAccount } from "wagmi";
+import * as PushAPI from "@pushprotocol/restapi";
+import { useAccount, useSigner } from "wagmi";
 import { ethers } from "ethers";
 import { Framework } from "@superfluid-finance/sdk-core";
 import MoneyRouterABI from "../artifacts/MoneyRouter.json";
 const moneyRouterAddress = "0x563a2ED0F4c430FD4A94D9C08a3fB08635C23eFE";
 
 function CreateFFC() {
-  const [indexValue, setIndexValue] = useState("");
   const { address, isConnected } = useAccount();
+
+  const [indexValue, setIndexValue] = useState("");
+  const [tempFlow, setTempFlow] = useState();
+  const [flowRate, setFlowRate] = useState();
+  const [showTime, setTime] = useState("second");
+
+  // const { data: signer } = useSigner();
+  const PK = `${process.env.REACT_APP_PUSH_CHANNEL_PKEY}`;
+  const Pkey = `0x${PK}`;
+  const signer = new ethers.Wallet(Pkey);
 
   const handleChange = (e) => {
     setIndexValue(e.target.value);
   };
 
+  const handleChangeTime = (e) => {
+    setTime(e.target.value);
+  };
+
   const [loadingAnim, setLoadingAnim] = useState(false);
   const [btnContent, setBtnContent] = useState("Create Flow");
 
+  // apiResponse?.status === 204, if sent successfully!
+  const sendMessage = async () => {
+    const receiver = document.getElementById("receiver").value;
+    console.log(receiver);
+    const flow = document.getElementById("flow").value;
+
+    const apiResponse = await PushAPI.payloads.sendNotification({
+      signer,
+      type: 3, // target
+      identityType: 2, // direct payload
+      notification: {
+        title: "Stream Created",
+        body: "Stream started from contract to your account",
+      },
+      payload: {
+        title: "Stream Created",
+        body: `Stream has been started from contract into your address
+        flow rate - ${flow} Wei/second`,
+        cta: "",
+        img: "",
+      },
+      recipients: `eip155:5:${receiver}`, // recipient address
+      channel: "eip155:5:0x158a6720c0709F8B55dc9753B92DF1d555A9F577", // your channel address
+      env: "staging",
+    });
+    if (apiResponse?.status === 204) {
+      console.log("Message sent successfully");
+    }
+  };
+
   const flowFromContract = async () => {
     setLoadingAnim(true);
+    await print();
     try {
       const { ethereum } = window;
       if (ethereum) {
@@ -39,14 +84,16 @@ function CreateFFC() {
         );
 
         const flow = document.getElementById("flow").value;
+        console.log(flowRate);
         const receiver = document.getElementById("receiver").value;
         //call money router create flow into contract method from signers[0]
         //this flow rate is ~1000 tokens/month
         await moneyRouter
           .connect(signer)
-          .createFlowFromContract(daix.address, receiver, flow)
+          .createFlowFromContract(daix.address, receiver, flowRate)
           .then(async function (tx) {
             await tx.wait();
+            sendMessage();
             console.log(`
             Congrats! You just successfully created a flow from the money router contract. 
             Tx Hash: ${tx.hash}
@@ -63,7 +110,26 @@ function CreateFFC() {
       setLoadingAnim(false);
     }
   };
-
+  const print = async (e) => {
+    if (showTime === "minute") {
+      setFlowRate(tempFlow * 60);
+    } else if (showTime === "hour") {
+      setFlowRate(tempFlow * 3600);
+    } else if (showTime === "day") {
+      setFlowRate(tempFlow * 86400);
+    } else if (showTime === "week") {
+      setFlowRate(tempFlow * 604800);
+    } else if (showTime === "month") {
+      setFlowRate(tempFlow * 18144000);
+    } else if (showTime === "year") {
+      setFlowRate(tempFlow * 18144000 * 365);
+    } else if (showTime === "second") {
+      setFlowRate(tempFlow);
+    }
+  };
+  useEffect(() => {
+    console.log(flowRate + "/second");
+  }, [flowRate]);
   return (
     <div className="db-sub">
       <h1>Create Flow</h1>
@@ -123,13 +189,65 @@ function CreateFFC() {
             placeholder="Receiver's Public Address"
           />
         </div>
-        <div className="subscriber-input-div">
-          <input
-            id="flow"
-            type="number"
-            className="subscriber-input-index"
-            placeholder="Flow rate"
-          />
+        <div className="flex-row">
+          <div className="subscriber-input-div">
+            <input
+              id="flow"
+              type="number"
+              className="subscriber-input-index"
+              placeholder="Flow rate in Wei"
+              onChange={(e) => setTempFlow(e.target.value)}
+            />
+          </div>
+
+          <FormControl required>
+            <Select
+              displayEmpty
+              id="demo-simple-select"
+              value={showTime}
+              onChange={handleChangeTime}
+              sx={{
+                margin: "10px 0px",
+                color: "rgba(18, 20, 30, 0.87)",
+                fontSize: "1rem",
+                padding: "0px 5px",
+                ".css-11u53oe-MuiSelect-select-MuiInputBase-input-MuiOutlinedInput-input.MuiSelect-select":
+                  {
+                    minHeight: "auto",
+                  },
+                ".MuiOutlinedInput-notchedOutline": {
+                  borderColor: "rgb(224, 224, 224)",
+                  boxShadow: "rgba(204, 204, 204, 0.25) 0px 0px 6px 3px",
+                  borderRadius: "15px",
+                },
+                "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                  borderColor: "rgb(224, 224, 224)",
+                  boxShadow: "rgba(204, 204, 204, 0.25) 0px 0px 6px 3px",
+                  borderRadius: "15px",
+                },
+                "&:hover .MuiOutlinedInput-notchedOutline": {
+                  borderColor: "rgb(224, 224, 224)",
+                  boxShadow: "rgba(204, 204, 204, 0.25) 0px 0px 6px 3px",
+                  borderRadius: "15px",
+                },
+                ".MuiSvgIcon-root ": {
+                  fill: "black",
+                },
+              }}
+              inputProps={{ "aria-label": "Without label" }}
+            >
+              {/* <MenuItem value="">
+                <h4 className="index-placeholder">Select Token</h4>
+              </MenuItem> */}
+              <MenuItem value={"second"}>/ second</MenuItem>
+              <MenuItem value={"minute"}>/ minute</MenuItem>
+              <MenuItem value={"hour"}>/ hour</MenuItem>
+              <MenuItem value={"day"}>/ day</MenuItem>
+              <MenuItem value={"week"}>/ week</MenuItem>
+              <MenuItem value={"month"}>/ month</MenuItem>
+              <MenuItem value={"year"}>/ year</MenuItem>
+            </Select>
+          </FormControl>
         </div>
 
         <div className="subscriber-add-btn">

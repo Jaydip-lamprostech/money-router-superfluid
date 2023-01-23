@@ -225,6 +225,13 @@
         }
       }
     }
+    .flex-row {
+      display: flex;
+      flex-direction: row;
+      .css-1nrlq1o-MuiFormControl-root {
+        min-width: 30%;
+      }
+    }
   }
 }
 
