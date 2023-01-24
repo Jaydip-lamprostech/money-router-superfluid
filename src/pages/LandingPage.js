@@ -34,7 +34,7 @@ function LandingPage() {
 
   const handleOpen = () => {
     setOpen(true);
-    notifi();
+    // notifi();
     setNewNotification(false);
     setnotificationNumber(0);
   };
@@ -97,6 +97,7 @@ function LandingPage() {
     const notifications = await PushAPI.user.getFeeds({
       user: `eip155:5:${address}`, // user address in CAIP
       env: "staging",
+      limit: 100,
     });
     console.log(notifications);
     setPushNotifications(notifications);
@@ -173,15 +174,23 @@ function LandingPage() {
         const notifications = await PushAPI.user.getFeeds({
           user: `eip155:5:${address}`, // user address in CAIP
           env: "staging",
+          limit: 100,
         });
         console.log(notifications);
-
+        // for (let i = 0; i < notifications.length; i++) {
+        //   if(notifications[i].app !== "")
+        // }
         if (notifications.length > showPushNotifications.length) {
           setNewNotification(true);
           setnotificationNumber(
             notifications.length - showPushNotifications.length
           );
         }
+        // for (let i = 0; i < notifications; i++) {
+        //   if (notifications[i].app === "Money-Router")
+        //     showPushNotifications(notifications[i]);
+        // }
+        // console.log(showPushNotifications);
         setPushNotifications(notifications);
       }, 5000);
       return () => clearInterval(timeInterval);

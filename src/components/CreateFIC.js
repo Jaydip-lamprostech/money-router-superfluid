@@ -250,6 +250,7 @@ function CreateFIC() {
           </FormControl>
         </div>
         {/* <h3>Unit</h3> */}
+        <p>{}</p>
         <div style={{ textAlign: "left", alignItems: "center" }}>
           <Tooltip
             title="1 fDAIx = 1000000000000000000 Wei"
