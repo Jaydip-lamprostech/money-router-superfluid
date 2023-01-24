@@ -32,10 +32,12 @@ function LandingPage() {
   const [showPushNotifications, setPushNotifications] = useState([]);
   const [showNewNotification, setNewNotification] = useState(false);
   const [notificationNumber, setnotificationNumber] = useState(0);
+  const [showDisplayNotification, setDisplayNotification] = useState(false);
   // notification model
   const [open, setOpen] = useState(false);
 
   const handleOpen = () => {
+    setDisplayNotification(true);
     setnotificationNumber(0);
     cookies.set("notificationCount", 0);
     setNewNotification(false);
@@ -47,6 +49,7 @@ function LandingPage() {
     setnotificationNumber(0);
     cookies.set("notificationCount", 0);
     setNewNotification(false);
+    setDisplayNotification(false);
   };
 
   // const ethers = require("ethers");
@@ -206,10 +209,15 @@ function LandingPage() {
             "notificationCount",
             notifications.length - showPushNotifications.length
           );
+          showPushNotifications.splice(0, showPushNotifications.length);
           for (let i = 0; i < notifications.length; i++) {
             // if (notifications[i].app === "Money-Router")
             showPushNotifications.push(notifications[i]);
           }
+          // if (showPushNotifications.length === notifications.length) {
+          //   setDisplayNotification(true);
+          // }
+
           setnotificationNumber(cookies.get("notificationCount"));
         }
 
@@ -406,7 +414,8 @@ function LandingPage() {
             )}
           </Typography>{" "}
           <Typography id="modal-modal-description" sx={{ mt: 2, p: 2 }}>
-            {showPushNotifications.length > 0 &&
+            {showDisplayNotification &&
+              showPushNotifications.length > 0 &&
               showOpted === true &&
               showPushNotifications.map((item, key) => {
                 return (
