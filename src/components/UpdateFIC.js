@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { FormControl, MenuItem, Select } from "@mui/material";
+import { FormControl, MenuItem, Select, Tooltip } from "@mui/material";
+import Fade from "@mui/material/Fade";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useAccount } from "wagmi";
 import { ethers } from "ethers";
@@ -11,7 +12,7 @@ function UpdateFIC() {
   const [indexValue, setIndexValue] = useState("");
   const { address, isConnected } = useAccount();
   const [tempFlow, setTempFlow] = useState();
-  const [flowRate, setFlowRate] = useState();
+  // const [flowRate, setFlowRate] = useState();
   const [showTime, setTime] = useState("second");
 
   const handleChange = (e) => {
@@ -26,7 +27,7 @@ function UpdateFIC() {
 
   const updatedFlowIntoContract = async () => {
     setLoadingAnim(true);
-    await print();
+
     try {
       const { ethereum } = window;
       if (ethereum) {
@@ -45,8 +46,26 @@ function UpdateFIC() {
           signer
         );
 
-        const flow = document.getElementById("flow").value;
+        // const flow = document.getElementById("flow").value;
+        let flowRate;
+        if (showTime === "minute") {
+          flowRate = tempFlow * 60;
+        } else if (showTime === "hour") {
+          flowRate = tempFlow * 3600;
+        } else if (showTime === "day") {
+          flowRate = tempFlow * 86400;
+        } else if (showTime === "week") {
+          flowRate = tempFlow * 604800;
+        } else if (showTime === "month") {
+          flowRate = tempFlow * 18144000;
+        } else if (showTime === "year") {
+          flowRate = tempFlow * 18144000 * 365;
+        } else if (showTime === "second") {
+          flowRate = parseInt(tempFlow);
+        }
         console.log(flowRate);
+        console.log(typeof flowRate);
+
         //call money router create flow into contract method from signer
         //this flow rate is ~2000 tokens/month
         await moneyRouter
@@ -70,26 +89,24 @@ function UpdateFIC() {
       setLoadingAnim(false);
     }
   };
-  const print = async (e) => {
-    if (showTime === "minute") {
-      setFlowRate(tempFlow * 60);
-    } else if (showTime === "hour") {
-      setFlowRate(tempFlow * 3600);
-    } else if (showTime === "day") {
-      setFlowRate(tempFlow * 86400);
-    } else if (showTime === "week") {
-      setFlowRate(tempFlow * 604800);
-    } else if (showTime === "month") {
-      setFlowRate(tempFlow * 18144000);
-    } else if (showTime === "year") {
-      setFlowRate(tempFlow * 18144000 * 365);
-    } else if (showTime === "second") {
-      setFlowRate(tempFlow);
-    }
-  };
-  useEffect(() => {
-    console.log(flowRate + "/second");
-  }, [flowRate]);
+  // const print = async (e) => {
+  //   if (showTime === "minute") {
+  //     setFlowRate(tempFlow * 60);
+  //   } else if (showTime === "hour") {
+  //     setFlowRate(tempFlow * 3600);
+  //   } else if (showTime === "day") {
+  //     setFlowRate(tempFlow * 86400);
+  //   } else if (showTime === "week") {
+  //     setFlowRate(tempFlow * 604800);
+  //   } else if (showTime === "month") {
+  //     setFlowRate(tempFlow * 18144000);
+  //   } else if (showTime === "year") {
+  //     setFlowRate(tempFlow * 18144000 * 365);
+  //   } else if (showTime === "second") {
+  //     setFlowRate(tempFlow);
+  //   }
+  // };
+
   return (
     <div className="db-sub">
       <h1>Update Flow</h1>
@@ -200,7 +217,24 @@ function UpdateFIC() {
           </FormControl>
         </div>
         {/* <h3>Unit</h3> */}
-
+        <div style={{ textAlign: "left", alignItems: "center" }}>
+          <Tooltip
+            title="1 fDAIx = 1000000000000000000 Wei"
+            arrow
+            TransitionComponent={Fade}
+            TransitionProps={{ timeout: 600 }}
+          >
+            <span
+              style={{
+                fontWeight: "600",
+                paddingLeft: "5px",
+                color: "rgba(18, 20, 30, 0.87)",
+              }}
+            >
+              What is Wei ?
+            </span>
+          </Tooltip>
+        </div>
         <div className="subscriber-add-btn">
           {isConnected ? (
             <button

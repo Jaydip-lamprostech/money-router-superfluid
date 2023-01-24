@@ -40,7 +40,9 @@ function Withdraw() {
         );
 
         const amount = document.getElementById("amount").value;
+        console.log(typeof amount);
         //call money router send lump sum method from signers[0]
+        // console.log(ethers.utils.parseEther(150));
         await moneyRouter
           .connect(signer)
           .withdrawFunds(daix.address, ethers.utils.parseEther(amount))
@@ -117,7 +119,7 @@ function Withdraw() {
             id="amount"
             type="number"
             className="subscriber-input-index"
-            placeholder="Amount"
+            placeholder="Enter amount in fDAIx"
           />
         </div>
         {/* <h3>Unit</h3> */}

@@ -80,6 +80,7 @@ function SendTokenLS() {
           // setLoadingAnim(false);
         }
         //call money router send lump sum method from signer
+        console.log(ethers.utils.parseEther(String(150)));
         const tx = await moneyRouter
           .connect(signer)
           .sendLumpSumToContract(
@@ -154,7 +155,7 @@ function SendTokenLS() {
             id="amount"
             type="number"
             className="subscriber-input-index"
-            placeholder="Amount"
+            placeholder="Enter amount in fDAIx"
           />
         </div>
         {/* <h3>Unit</h3> */}

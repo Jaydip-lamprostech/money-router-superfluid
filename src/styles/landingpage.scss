@@ -167,3 +167,20 @@ button.push-btns {
   border-radius: 10px;
   color: #10bb35;
 }
+button.notification-btn {
+  position: relative;
+
+  span.red-dot {
+    font-weight: 600;
+    font-size: 0.65rem;
+    color: white;
+    position: absolute;
+    background-color: #10bb35;
+    top: 3px;
+    padding: 0;
+    right: 15px;
+    width: 16px;
+    height: 16px;
+    border-radius: 5px;
+  }
+}

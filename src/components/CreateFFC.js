@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { FormControl, MenuItem, Select } from "@mui/material";
+import { FormControl, MenuItem, Select, Tooltip } from "@mui/material";
+import Fade from "@mui/material/Fade";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import * as PushAPI from "@pushprotocol/restapi";
 import { useAccount, useSigner } from "wagmi";
@@ -13,7 +14,7 @@ function CreateFFC() {
 
   const [indexValue, setIndexValue] = useState("");
   const [tempFlow, setTempFlow] = useState();
-  const [flowRate, setFlowRate] = useState();
+  // const [flowRate, setFlowRate] = useState();
   const [showTime, setTime] = useState("second");
 
   // const { data: signer } = useSigner();
@@ -33,10 +34,10 @@ function CreateFFC() {
   const [btnContent, setBtnContent] = useState("Create Flow");
 
   // apiResponse?.status === 204, if sent successfully!
-  const sendMessage = async () => {
+  const sendMessage = async (flowRate) => {
     const receiver = document.getElementById("receiver").value;
     console.log(receiver);
-    const flow = document.getElementById("flow").value;
+    // const flow = document.getElementById("flow").value;
 
     const apiResponse = await PushAPI.payloads.sendNotification({
       signer,
@@ -49,7 +50,7 @@ function CreateFFC() {
       payload: {
         title: "Stream Created",
         body: `Stream has been started from contract into your address
-        flow rate - ${flow} Wei/second`,
+        flow rate - ${flowRate} Wei/second`,
         cta: "",
         img: "",
       },
@@ -64,7 +65,6 @@ function CreateFFC() {
 
   const flowFromContract = async () => {
     setLoadingAnim(true);
-    await print();
     try {
       const { ethereum } = window;
       if (ethereum) {
@@ -83,7 +83,24 @@ function CreateFFC() {
           signer
         );
 
-        const flow = document.getElementById("flow").value;
+        // const flow = document.getElementById("flow").value;
+
+        let flowRate;
+        if (showTime === "minute") {
+          flowRate = tempFlow * 60;
+        } else if (showTime === "hour") {
+          flowRate = tempFlow * 3600;
+        } else if (showTime === "day") {
+          flowRate = tempFlow * 86400;
+        } else if (showTime === "week") {
+          flowRate = tempFlow * 604800;
+        } else if (showTime === "month") {
+          flowRate = tempFlow * 18144000;
+        } else if (showTime === "year") {
+          flowRate = tempFlow * 18144000 * 365;
+        } else if (showTime === "second") {
+          flowRate = parseInt(tempFlow);
+        }
         console.log(flowRate);
         const receiver = document.getElementById("receiver").value;
         //call money router create flow into contract method from signers[0]
@@ -93,7 +110,7 @@ function CreateFFC() {
           .createFlowFromContract(daix.address, receiver, flowRate)
           .then(async function (tx) {
             await tx.wait();
-            sendMessage();
+            sendMessage(flowRate);
             console.log(`
             Congrats! You just successfully created a flow from the money router contract. 
             Tx Hash: ${tx.hash}
@@ -110,26 +127,26 @@ function CreateFFC() {
       setLoadingAnim(false);
     }
   };
-  const print = async (e) => {
-    if (showTime === "minute") {
-      setFlowRate(tempFlow * 60);
-    } else if (showTime === "hour") {
-      setFlowRate(tempFlow * 3600);
-    } else if (showTime === "day") {
-      setFlowRate(tempFlow * 86400);
-    } else if (showTime === "week") {
-      setFlowRate(tempFlow * 604800);
-    } else if (showTime === "month") {
-      setFlowRate(tempFlow * 18144000);
-    } else if (showTime === "year") {
-      setFlowRate(tempFlow * 18144000 * 365);
-    } else if (showTime === "second") {
-      setFlowRate(tempFlow);
-    }
-  };
-  useEffect(() => {
-    console.log(flowRate + "/second");
-  }, [flowRate]);
+  // const print = async (e) => {
+  //   if (showTime === "minute") {
+  //     setFlowRate(tempFlow * 60);
+  //   } else if (showTime === "hour") {
+  //     setFlowRate(tempFlow * 3600);
+  //   } else if (showTime === "day") {
+  //     setFlowRate(tempFlow * 86400);
+  //   } else if (showTime === "week") {
+  //     setFlowRate(tempFlow * 604800);
+  //   } else if (showTime === "month") {
+  //     setFlowRate(tempFlow * 18144000);
+  //   } else if (showTime === "year") {
+  //     setFlowRate(tempFlow * 18144000 * 365);
+  //   } else if (showTime === "second") {
+  //     setFlowRate(tempFlow);
+  //   }
+  // };
+  // useEffect(() => {
+  //   console.log(flowRate + "/second");
+  // }, [flowRate]);
   return (
     <div className="db-sub">
       <h1>Create Flow</h1>
@@ -249,7 +266,24 @@ function CreateFFC() {
             </Select>
           </FormControl>
         </div>
-
+        <div style={{ textAlign: "left", alignItems: "center" }}>
+          <Tooltip
+            title="1 fDAIx = 1000000000000000000 Wei"
+            arrow
+            TransitionComponent={Fade}
+            TransitionProps={{ timeout: 600 }}
+          >
+            <span
+              style={{
+                fontWeight: "600",
+                paddingLeft: "5px",
+                color: "rgba(18, 20, 30, 0.87)",
+              }}
+            >
+              What is Wei ?
+            </span>
+          </Tooltip>
+        </div>
         <div className="subscriber-add-btn">
           {isConnected ? (
             <button className="action-btn" onClick={() => flowFromContract()}>

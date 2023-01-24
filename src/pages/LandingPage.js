@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 import "../styles/landingpage.scss";
@@ -14,6 +14,7 @@ import FlowFromContract from "../components/FlowFromContract";
 import { Box, Button, Modal, Skeleton, Typography } from "@mui/material";
 import * as PushAPI from "@pushprotocol/restapi";
 import { useAccount, useSigner } from "wagmi";
+import push_logo from "../assets/push_logo.png";
 
 function LandingPage() {
   // const [index, setIndex] = useState();
@@ -23,14 +24,19 @@ function LandingPage() {
   const [showFlowFromContract, setFlowFromContract] = useState(false);
   const { data: signer } = useSigner();
   const [showOpted, setOpted] = useState(false);
-  const { address } = useAccount();
+  const { address, isConnected } = useAccount();
 
-  const [showPushNotifications, setPushNotifications] = useState();
+  const [showPushNotifications, setPushNotifications] = useState([]);
+  const [showNewNotification, setNewNotification] = useState(false);
+  const [notificationNumber, setnotificationNumber] = useState(0);
   // notification model
   const [open, setOpen] = useState(false);
+
   const handleOpen = () => {
     setOpen(true);
     notifi();
+    setNewNotification(false);
+    setnotificationNumber(0);
   };
   const handleClose = () => setOpen(false);
 
@@ -38,7 +44,37 @@ function LandingPage() {
   // const PK = "bbc51259d318490f8adf068a81fa146344b1de5301413c11279f91ea31853859";
   // const Pkey = `0x${PK}`;
   // const signer = new ethers.Wallet(Pkey);
+  // const timeInterval = window.setInterval(() => {
+  //   alert("Hello");
+  //   return <></>;
+  // const subscriptions = await PushAPI.user.getSubscriptions({
+  //   user: `eip155:5:${address}`, // user address in CAIP
+  //   env: "staging",
+  // });
+  // if (subscriptions.length === 0) {
+  //   setOpted(false);
+  // }
+  // for (let i = 0; i < subscriptions.length; i++) {
+  //   if (
+  //     subscriptions[i].channel ===
+  //     "0x158a6720c0709F8B55dc9753B92DF1d555A9F577"
+  //   ) {
+  //     console.log("subscribed");
+  //     setOpted(true);
+  //   }
+  // }
+  // console.log(subscriptions);
 
+  // const notifications = await PushAPI.user.getFeeds({
+  //   user: `eip155:5:${address}`, // user address in CAIP
+  //   env: "staging",
+  // });
+  // console.log(notifications);
+  // if (notifications.length > showPushNotifications.length) {
+  //   setNewNotification(true);
+  //   setPushNotifications(notifications);
+  // }
+  // }, 10000);
   const notifi = async () => {
     const subscriptions = await PushAPI.user.getSubscriptions({
       user: `eip155:5:${address}`, // user address in CAIP
@@ -112,6 +148,45 @@ function LandingPage() {
     overflowX: "hidden",
     maxWidth: "700px",
   };
+
+  useEffect(() => {
+    if (address) {
+      const timeInterval = setInterval(async () => {
+        console.log("timer");
+        const subscriptions = await PushAPI.user.getSubscriptions({
+          user: `eip155:5:${address}`, // user address in CAIP
+          env: "staging",
+        });
+        if (subscriptions.length === 0) {
+          setOpted(false);
+        }
+        for (let i = 0; i < subscriptions.length; i++) {
+          if (
+            subscriptions[i].channel ===
+            "0x158a6720c0709F8B55dc9753B92DF1d555A9F577"
+          ) {
+            console.log("subscribed");
+            setOpted(true);
+          }
+        }
+        console.log(subscriptions);
+        const notifications = await PushAPI.user.getFeeds({
+          user: `eip155:5:${address}`, // user address in CAIP
+          env: "staging",
+        });
+        console.log(notifications);
+
+        if (notifications.length > showPushNotifications.length) {
+          setNewNotification(true);
+          setnotificationNumber(
+            notifications.length - showPushNotifications.length
+          );
+        }
+        setPushNotifications(notifications);
+      }, 5000);
+      return () => clearInterval(timeInterval);
+    }
+  }, [address]);
 
   return (
     <div className="main">
@@ -225,18 +300,18 @@ function LandingPage() {
       <div className="main-right">
         <div className="right-header-parent">
           <header className="right-header">
-            <Button onClick={handleOpen}>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                height="24px"
-                viewBox="0 0 24 24"
-                width="24px"
-                fill="#10bb35"
-              >
-                <path d="M0 0h24v24H0V0z" fill="none" />
-                <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-1.29 1.29c-.63.63-.19 1.71.7 1.71h13.17c.89 0 1.34-1.08.71-1.71L18 16z" />
-              </svg>
-            </Button>
+            {/* <button onClick={() => timeInterval()}>start</button> */}
+            {isConnected ? (
+              <Button onClick={handleOpen} className="notification-btn">
+                <img src={push_logo} alt="pushlogo" height={"28px"} />{" "}
+                {showNewNotification ? (
+                  <span className="red-dot">
+                    {notificationNumber > 0 ? notificationNumber : null}
+                  </span>
+                ) : null}
+              </Button>
+            ) : null}
+
             <ConnectButton
               accountStatus={{
                 smallScreen: "avatar",
@@ -299,7 +374,7 @@ function LandingPage() {
             )}
           </Typography>{" "}
           <Typography id="modal-modal-description" sx={{ mt: 2, p: 2 }}>
-            {showPushNotifications &&
+            {showPushNotifications.length > 0 &&
               showOpted === true &&
               showPushNotifications.map((item, key) => {
                 return (
