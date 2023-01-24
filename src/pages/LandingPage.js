@@ -16,7 +16,10 @@ import * as PushAPI from "@pushprotocol/restapi";
 import { useAccount, useSigner } from "wagmi";
 import push_logo from "../assets/push_logo.png";
 
+import Cookies from "universal-cookie";
+
 function LandingPage() {
+  const cookies = new Cookies();
   // const [index, setIndex] = useState();
   const [showDashboard, setDashboard] = useState(true);
   const [showLumpSum, setLumpSum] = useState(false);
@@ -33,12 +36,18 @@ function LandingPage() {
   const [open, setOpen] = useState(false);
 
   const handleOpen = () => {
+    setnotificationNumber(0);
+    cookies.set("notificationCount", 0);
+    setNewNotification(false);
     setOpen(true);
     // notifi();
-    setNewNotification(false);
-    setnotificationNumber(0);
   };
-  const handleClose = () => setOpen(false);
+  const handleClose = () => {
+    setOpen(false);
+    setnotificationNumber(0);
+    cookies.set("notificationCount", 0);
+    setNewNotification(false);
+  };
 
   // const ethers = require("ethers");
   // const PK = "bbc51259d318490f8adf068a81fa146344b1de5301413c11279f91ea31853859";
@@ -75,33 +84,33 @@ function LandingPage() {
   //   setPushNotifications(notifications);
   // }
   // }, 10000);
-  const notifi = async () => {
-    const subscriptions = await PushAPI.user.getSubscriptions({
-      user: `eip155:5:${address}`, // user address in CAIP
-      env: "staging",
-    });
-    if (subscriptions.length === 0) {
-      setOpted(false);
-    }
-    for (let i = 0; i < subscriptions.length; i++) {
-      if (
-        subscriptions[i].channel ===
-        "0x158a6720c0709F8B55dc9753B92DF1d555A9F577"
-      ) {
-        console.log("subscribed");
-        setOpted(true);
-      }
-    }
-    console.log(subscriptions);
+  // const notifi = async () => {
+  //   const subscriptions = await PushAPI.user.getSubscriptions({
+  //     user: `eip155:5:${address}`, // user address in CAIP
+  //     env: "staging",
+  //   });
+  //   if (subscriptions.length === 0) {
+  //     setOpted(false);
+  //   }
+  //   for (let i = 0; i < subscriptions.length; i++) {
+  //     if (
+  //       subscriptions[i].channel ===
+  //       "0x158a6720c0709F8B55dc9753B92DF1d555A9F577"
+  //     ) {
+  //       console.log("subscribed");
+  //       setOpted(true);
+  //     }
+  //   }
+  //   console.log(subscriptions);
 
-    const notifications = await PushAPI.user.getFeeds({
-      user: `eip155:5:${address}`, // user address in CAIP
-      env: "staging",
-      limit: 100,
-    });
-    console.log(notifications);
-    setPushNotifications(notifications);
-  };
+  //   const notifications = await PushAPI.user.getFeeds({
+  //     user: `eip155:5:${address}`, // user address in CAIP
+  //     env: "staging",
+  //     limit: 100,
+  //   });
+  //   console.log(notifications);
+  //   setPushNotifications(notifications);
+  // };
 
   const optIn = async () => {
     await PushAPI.channels.subscribe({
@@ -151,6 +160,7 @@ function LandingPage() {
   };
 
   useEffect(() => {
+    console.log(cookies.get("notificationCount"));
     if (address) {
       const timeInterval = setInterval(async () => {
         console.log("timer");
@@ -180,18 +190,31 @@ function LandingPage() {
         // for (let i = 0; i < notifications.length; i++) {
         //   if(notifications[i].app !== "")
         // }
+        // if (
+        //   cookies.get("notificationCount") !==
+        //   notifications.length - showPushNotifications.length
+        // ) {
+        //   cookies.set(
+        //     "notificationCount",
+        //     notifications.length - showPushNotifications.length
+        //   );
+        // }
+
         if (notifications.length > showPushNotifications.length) {
           setNewNotification(true);
-          setnotificationNumber(
+          cookies.set(
+            "notificationCount",
             notifications.length - showPushNotifications.length
           );
+          for (let i = 0; i < notifications.length; i++) {
+            // if (notifications[i].app === "Money-Router")
+            showPushNotifications.push(notifications[i]);
+          }
+          setnotificationNumber(cookies.get("notificationCount"));
         }
-        // for (let i = 0; i < notifications; i++) {
-        //   if (notifications[i].app === "Money-Router")
-        //     showPushNotifications(notifications[i]);
-        // }
+
         // console.log(showPushNotifications);
-        setPushNotifications(notifications);
+        // setPushNotifications(showPushNotifications);
       }, 5000);
       return () => clearInterval(timeInterval);
     }
