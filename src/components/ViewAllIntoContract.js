@@ -16,12 +16,20 @@ function ViewAllIntoContract() {
 
     const data_ = `
     query {
+     
       flowUpdatedEvents(
-        where: {receiver: "0x563a2ED0F4c430FD4A94D9C08a3fB08635C23eFE", sender: "${address}"}
+        where: {receiver: "0x563a2ed0f4c430fd4a94d9c08a3fb08635c23efe"}
         orderBy: timestamp
+        orderDirection: desc
       ) {
+        sender
+        stream {
+          currentFlowRate
+        }
         timestamp
         flowRate
+        totalAmountStreamedUntilTimestamp
+        oldFlowRate
       }
     }
   `;
@@ -30,6 +38,8 @@ function ViewAllIntoContract() {
     });
     const result1 = await c.query(data_).toPromise();
     const finalData = result1.data.flowUpdatedEvents;
+    console.log("finalData");
+    console.log(finalData);
     try {
       const { ethereum } = window;
       if (ethereum) {
@@ -65,13 +75,21 @@ function ViewAllIntoContract() {
             String(converted.getMonth() + 1) +
             "/" +
             String(converted.getFullYear());
+
           if (!data.find((item) => finalData[i].timestamp === item[3])) {
-            if (i === 0) {
+            // let check = true;
+            // for (let i = 0; i < data.length; i++) {
+            //   if (data[i].includes(finalData[i].sender)) {
+            //     check = false;
+            //   }
+            // }
+            if (finalData[i].stream["currentFlowRate"] !== "0") {
               data.push([
                 finalData[i].flowRate,
                 date,
                 active,
                 finalData[i].timestamp,
+                finalData[i].sender,
               ]);
             } else {
               data.push([
@@ -79,6 +97,7 @@ function ViewAllIntoContract() {
                 date,
                 "Not Active",
                 finalData[i].timestamp,
+                finalData[i].sender,
               ]);
             }
           }
@@ -114,7 +133,7 @@ function ViewAllIntoContract() {
                 ? data.map((item, key) => {
                     return item[0] !== "0" ? (
                       <tr key={key}>
-                        <td>{address}</td>
+                        <td>{item[4]}</td>
                         <td>{item[0]}</td>
                         <td>{item[1]}</td>
                         <td>{item[2]}</td>

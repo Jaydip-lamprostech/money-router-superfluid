@@ -19,7 +19,11 @@ function ViewAllFromContract() {
       flowUpdatedEvents(
         where: {sender: "0x563a2ED0F4c430FD4A94D9C08a3fB08635C23eFE"}
         orderBy: timestamp
+        orderDirection: desc
       ) {
+        stream {
+          currentFlowRate
+        }
         timestamp
         receiver
         flowRate
@@ -68,13 +72,23 @@ function ViewAllFromContract() {
             "/" +
             String(converted.getFullYear());
           if (!data.find((item) => finalData[i].timestamp === item[4])) {
-            data.push([
-              finalData[i].flowRate,
-              date,
-              active,
-              finalData[i].receiver,
-              finalData[i].timestamp,
-            ]);
+            if (finalData[i].stream.currentFlowRate !== "0") {
+              data.push([
+                finalData[i].flowRate,
+                date,
+                "Active",
+                finalData[i].receiver,
+                finalData[i].timestamp,
+              ]);
+            } else {
+              data.push([
+                finalData[i].flowRate,
+                date,
+                "Not Active",
+                finalData[i].receiver,
+                finalData[i].timestamp,
+              ]);
+            }
           }
         }
         setData(data);
@@ -112,7 +126,23 @@ function ViewAllFromContract() {
                         <td>{item[3]}</td>
                         <td>{item[0]}</td>
                         <td>{item[1]}</td>
-                        <td>{item[2]}</td>
+                        <td>
+                          {item[2] === "Active" ? (
+                            <span
+                              style={{
+                                padding: "10px",
+                                backgroundColor: "#10bb3514",
+                                color: "#10bb35",
+                                fontWeight: "600",
+                                borderRadius: "10px",
+                              }}
+                            >
+                              Active
+                            </span>
+                          ) : (
+                            <span>Not Active</span>
+                          )}
+                        </td>
                       </tr>
                     ) : null;
                   })
