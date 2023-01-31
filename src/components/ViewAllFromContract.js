@@ -16,17 +16,15 @@ function ViewAllFromContract() {
 
     const data_ = `
     query {
-      flowUpdatedEvents(
-        where: {sender: "0x563a2ED0F4c430FD4A94D9C08a3fB08635C23eFE"}
-        orderBy: timestamp
-        orderDirection: desc
-      ) {
-        stream {
+      account(id: "0x563a2ed0f4c430fd4a94d9c08a3fb08635c23efe") {
+        outflows(orderBy: createdAtTimestamp, orderDirection: desc) {
           currentFlowRate
+          streamedUntilUpdatedAt
+          createdAtTimestamp
+          receiver {
+            id
+          }
         }
-        timestamp
-        receiver
-        flowRate
       }
     }
   `;
@@ -34,69 +32,29 @@ function ViewAllFromContract() {
       url: API,
     });
     const result1 = await c.query(data_).toPromise();
-    const finalData = result1.data.flowUpdatedEvents;
-    try {
-      const { ethereum } = window;
-      if (ethereum) {
-        const provider = new ethers.providers.Web3Provider(ethereum);
-        const signer = provider.getSigner();
+    const finalData = result1.data.account.outflows;
+    console.log("finalData");
 
-        const sf = await Framework.create({
-          chainId: 5,
-          provider: provider,
-        });
-        const daix = await sf.loadSuperToken("fDAIx");
-
-        // loop over query response
-        for (let i = 0; i < finalData.length; i++) {
-          const response = await daix.getFlow({
-            sender: "0x563a2ED0F4c430FD4A94D9C08a3fB08635C23eFE",
-            receiver: finalData[i].receiver,
-            providerOrSigner: signer,
-          });
-          let active;
-          if (
-            response.deposit === "0" &&
-            response.owedDeposit === "0" &&
-            response.flowRate === "0"
-          ) {
-            active = "Not Active";
-          } else {
-            active = "Active";
-          }
-          const converted = new Date(parseInt(finalData[i].timestamp) * 1000);
-          const date =
-            String(converted.getDate()) +
-            "/" +
-            String(converted.getMonth() + 1) +
-            "/" +
-            String(converted.getFullYear());
-          if (!data.find((item) => finalData[i].timestamp === item[4])) {
-            if (finalData[i].stream.currentFlowRate !== "0") {
-              data.push([
-                finalData[i].flowRate,
-                date,
-                "Active",
-                finalData[i].receiver,
-                finalData[i].timestamp,
-              ]);
-            } else {
-              data.push([
-                finalData[i].flowRate,
-                date,
-                "Not Active",
-                finalData[i].receiver,
-                finalData[i].timestamp,
-              ]);
-            }
-          }
-        }
-        setData(data);
-        setLoading(true);
+    if (data.length < finalData.length) {
+      for (let i = 0; i < finalData.length; i++) {
+        const converted = new Date(
+          parseInt(finalData[i].createdAtTimestamp) * 1000
+        );
+        const date =
+          String(converted.getDate()) +
+          "/" +
+          String(converted.getMonth() + 1) +
+          "/" +
+          String(converted.getFullYear());
+        data.push([
+          finalData[i].receiver.id,
+          finalData[i].currentFlowRate,
+          date,
+        ]);
       }
-    } catch (error) {
-      console.log(error);
     }
+    setData(data);
+    setLoading(true);
   };
   useEffect(() => {
     getData();
@@ -123,24 +81,40 @@ function ViewAllFromContract() {
                 ? data.map((item, key) => {
                     return item[0] !== "0" ? (
                       <tr key={key}>
-                        <td>{item[3]}</td>
-                        <td>{item[0]}</td>
-                        <td>{item[1]}</td>
                         <td>
-                          {item[2] === "Active" ? (
-                            <span
-                              style={{
-                                padding: "10px",
-                                backgroundColor: "#10bb3514",
-                                color: "#10bb35",
-                                fontWeight: "600",
-                                borderRadius: "10px",
-                              }}
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "center",
+                              alignItems: "center",
+                            }}
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              height="24px"
+                              viewBox="0 0 24 24"
+                              width="24px"
+                              fill="#000000"
+                              style={{ transform: "rotate(180deg)" }}
                             >
-                              Active
-                            </span>
+                              <path d="M0 0h24v24H0V0z" fill="none" />
+                              <path d="M19 11H7.83l4.88-4.88c.39-.39.39-1.03 0-1.42-.39-.39-1.02-.39-1.41 0l-6.59 6.59c-.39.39-.39 1.02 0 1.41l6.59 6.59c.39.39 1.02.39 1.41 0 .39-.39.39-1.02 0-1.41L7.83 13H19c.55 0 1-.45 1-1s-.45-1-1-1z" />
+                            </svg>{" "}
+                            {item[0].substring(0, 7) +
+                              "..." +
+                              item[0].substring(
+                                item[0].length - 5,
+                                item[0].length
+                              )}
+                          </div>
+                        </td>
+                        <td>{item[1]}</td>
+                        <td>{item[2]}</td>
+                        <td>
+                          {item[1] > "0" ? (
+                            <span className="active-span">Active</span>
                           ) : (
-                            <span>Not Active</span>
+                            "Not Active"
                           )}
                         </td>
                       </tr>
