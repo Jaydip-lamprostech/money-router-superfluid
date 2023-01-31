@@ -108,7 +108,7 @@ function ViewAllFromContract() {
                               )}
                           </div>
                         </td>
-                        <td>{item[1]}</td>
+                        <td>{item[1] + " wei / sec"}</td>
                         <td>{item[2]}</td>
                         <td>
                           {item[1] > "0" ? (
